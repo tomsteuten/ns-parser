@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NetSuite FSM Job Parser</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {
+        font-family: system-ui, sans-serif;
+        background: #111827;
+        color: #f9fafb;
+        padding: 20px;
+        line-height: 1.5;
+        max-width: 900px;
+        margin: auto;
+    }
+    .box {
+        background: #1f2937;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        overflow-x: auto;
+    }
+    button {
+        padding: 8px 14px;
+        font-size: 14px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+    textarea {
+        width: 100%;
+        height: 200px;
+        background: #111827;
+        color: #f9fafb;
+        border: 1px solid #374151;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 14px;
+    }
+</style>
+</head>
+<body>
+
+<h2>NetSuite FSM Job Parser</h2>
+<p>Data extracted via bookmarklet from the live NetSuite FSM job page.</p>
+
+<div class="box">
+    <strong>Extracted Job Data:</strong>
+    <pre id="jobData"></pre>
+</div>
+
+<button id="copyText">Copy Text Summary</button>
+<button id="copyMd">Copy Markdown Summary</button>
+
+<h3>Raw JSON:</h3>
+<textarea id="raw"></textarea>
+
+<script>
+function mdCell(v) {
+    return (v || "").toString().replace(/\r?\n/g, "<br>").replace(/\|/g, "\\|");
+}
+
+function buildMarkdown(d) {
+    const today = new Date().toLocaleDateString("en-AU");
+    return (
+        "# Job Summary – " + mdCell(d.caseNum) + " (" + mdCell(d.woNum) + ")\n\n" +
+        "**Date:** " + today + "\n\n" +
+        "---\n\n" +
+        "## Job Information\n\n" +
+        "| Field | Value |\n" +
+        "|------|-------|\n" +
+        "| Site | " + mdCell(d.site) + " |\n" +
+        "| Address | " + mdCell(d.address) + " |\n" +
+        "| Case Number | " + mdCell(d.caseNum) + " |\n" +
+        "| Case Type | " + mdCell(d.caseType) + " |\n" +
+        "| Case Details (URL) | " + mdCell(d.caseDetails) + " |\n" +
+        "| Task Number | " + mdCell(d.taskNum) + " |\n" +
+        "| Task Type | " + mdCell(d.taskType) + " |\n" +
+        "| WO # | " + mdCell(d.woNum) + " |\n" +
+        "| Scheduled Window | " + mdCell(d.scheduledWindow) + " |\n" +
+        "| Date/Time Issued | " + mdCell(d.issuedDate) + " |\n" +
+        "| Complete OverDue Date | " + mdCell(d.completeDue) + " |\n" +
+        "| Task Details | " + mdCell(d.description) + " |\n" +
+        "| Equipment | " + mdCell(d.equipment) + " |\n"
+    );
+}
+
+function buildText(d) {
+    const today = new Date().toLocaleDateString("en-AU");
+    return [
+        `Date: ${today}`,
+        `Case Number: ${d.caseNum || ""}`,
+        `Case Type: ${d.caseType || ""}`,
+        `Task Number: ${d.taskNum || ""}`,
+        `Task Type: ${d.taskType || ""}`,
+        `WO Number: ${d.woNum || ""}`,
+        `Site: ${d.site || ""}`,
+        `Address: ${d.address || ""}`,
+        `Scheduled Window: ${d.scheduledWindow || ""}`,
+        `Issued: ${d.issuedDate || ""}`,
+        `Overdue Date: ${d.completeDue || ""}`,
+        `Case Details URL: ${d.caseDetails || ""}`,
+        `Equipment: ${d.equipment || ""}`,
+        "",
+        "Task Details:",
+        d.description || ""
+    ].join("\n");
+}
+
+function showData() {
+    const params = new URLSearchParams(window.location.search);
+    const json = params.get("d");
+
+    if (!json) {
+        document.getElementById("jobData").innerText = "No data received.";
+        return;
+    }
+
+    const data = JSON.parse(decodeURIComponent(json));
+
+    document.getElementById("jobData").innerText =
+        JSON.stringify(data, null, 2);
+
+    document.getElementById("raw").value =
+        JSON.stringify(data, null, 2);
+
+    document.getElementById("copyText").onclick = () =>
+        navigator.clipboard.writeText(buildText(data));
+
+    document.getElementById("copyMd").onclick = () =>
+        navigator.clipboard.writeText(buildMarkdown(data));
+}
+
+showData();
+</script>
+
+</body>
+</html>
